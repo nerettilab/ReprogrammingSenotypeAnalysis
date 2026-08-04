@@ -10,7 +10,8 @@ library(tidyverse)
 library(ggplot2)
 library(ggupset)
 
-bj.repro <- read.delim("sen_genes_normalized_repro.tsv")
+bj.repro.up <- read.delim("sen_upgenes_normalized_repro.tsv")
+bj.repro.down <- read.delim("sen_downgenes_normalized_repro.tsv")
 
 bj.rs <- read.csv(file = "../../Data/SenotypeComparisons/BJ_RS_marthandan2016_counts.csv")
 
@@ -50,9 +51,14 @@ norm.counts.bj.rs <- cbind(
 
 res.bj.rs <- results(dds.bj.rs)
 res.bj.rs <- res.bj.rs[which(res.bj.rs$padj < 0.05),]
-top.genes.rs <- rownames(res.bj.rs[which(res.bj.rs$log2FoldChange > 0.5),])
-top.bj.rs <- norm.counts.bj.rs[which(rownames(norm.counts.bj.rs) %in% top.genes.rs),]
-top.bj.rs <- top.bj.rs[which(top.bj.rs[,"external_gene_id"] != ""),]
+
+up.genes.rs <- rownames(res.bj.rs[which(res.bj.rs$log2FoldChange > 0.5),])
+up.bj.rs <- norm.counts.bj.rs[which(rownames(norm.counts.bj.rs) %in% up.genes.rs),]
+up.bj.rs <- up.bj.rs[which(up.bj.rs[,"external_gene_id"] != ""),]
+
+down.genes.rs <- rownames(res.bj.rs[which(res.bj.rs$log2FoldChange < -0.5),])
+down.bj.rs <- norm.counts.bj.rs[which(rownames(norm.counts.bj.rs) %in% down.genes.rs),]
+down.bj.rs <- down.bj.rs[which(down.bj.rs[,"external_gene_id"] != ""),]
 
 # BJ - SIS
 counts.bj.sis <- matrix(
@@ -75,8 +81,12 @@ norm.counts.bj.sis <- counts(dds.bj.sis, normalized = TRUE)
 
 res.bj.sis <- results(dds.bj.sis)
 res.bj.sis <- res.bj.sis[which(res.bj.sis$padj < 0.05),]
-top.genes.sis <- rownames(res.bj.sis[which(res.bj.sis$log2FoldChange > 0.5),])
-top.bj.sis <- norm.counts.bj.sis[which(rownames(norm.counts.bj.sis) %in% top.genes.sis),]
+
+up.genes.sis <- rownames(res.bj.sis[which(res.bj.sis$log2FoldChange > 0.5),])
+up.bj.sis <- norm.counts.bj.sis[which(rownames(norm.counts.bj.sis) %in% up.genes.sis),]
+
+down.genes.sis <- rownames(res.bj.sis[which(res.bj.sis$log2FoldChange < -0.5),])
+down.bj.sis <- norm.counts.bj.sis[which(rownames(norm.counts.bj.sis) %in% down.genes.sis),]
 
 # BJ - OIS
 counts.bj.ois <- matrix(
@@ -107,99 +117,197 @@ norm.counts.bj.ois <- cbind(
 
 res.bj.ois <- results(dds.bj.ois)
 res.bj.ois <- res.bj.ois[which(res.bj.ois$padj < 0.05),]
-top.genes.ois <- rownames(res.bj.ois[which(res.bj.ois$log2FoldChange > 0.5),])
-top.bj.ois <- norm.counts.bj.ois[which(rownames(norm.counts.bj.ois) %in% top.genes.ois),]
-top.bj.ois <- top.bj.ois[which(top.bj.ois[,"GeneID"] != ""),]
+
+up.genes.ois <- rownames(res.bj.ois[which(res.bj.ois$log2FoldChange > 0.5),])
+up.bj.ois <- norm.counts.bj.ois[which(rownames(norm.counts.bj.ois) %in% up.genes.ois),]
+up.bj.ois <- up.bj.ois[which(up.bj.ois[,"GeneID"] != ""),]
+
+down.genes.ois <- rownames(res.bj.ois[which(res.bj.ois$log2FoldChange < -0.5),])
+down.bj.ois <- norm.counts.bj.ois[which(rownames(norm.counts.bj.ois) %in% down.genes.ois),]
+down.bj.ois <- down.bj.ois[which(down.bj.ois[,"GeneID"] != ""),]
 
 
-## Compare markers of reprogramming-induced senescent cells with those of other senotypes
-# BJ cells (Human)
-repro.rs.bj <- which(rownames(bj.repro) %in% top.bj.rs[,"external_gene_id"])
-repro.sis.bj <- which(rownames(bj.repro) %in% rownames(top.bj.sis))
-repro.ois.bj <- which(rownames(bj.repro) %in% top.bj.ois[,"GeneID"])
+## Compare genes differentially expressed in reprogramming-induced senescent cells with those of other senotypes
+# Upregulated
+repro.rs.bj <- which(rownames(bj.repro.up) %in% up.bj.rs[,"external_gene_id"])
+repro.sis.bj <- which(rownames(bj.repro.up) %in% rownames(up.bj.sis))
+repro.ois.bj <- which(rownames(bj.repro.up) %in% up.bj.ois[,"GeneID"])
 
 print(paste0(
   length(union(repro.rs.bj, union(repro.sis.bj, repro.ois.bj))), "/", 
-  length(rownames(bj.repro)), 
-  " markers for reprogramming-induced senescence are also among the markers for another type of senescence induction."
+  length(rownames(bj.repro.up)), 
+  " upregulated genes in reprogramming-induced senescence are also among those of another type of senescence induction."
 ))
 print(paste0(
-  length(rownames(bj.repro)) - length(union(repro.rs.bj, union(repro.sis.bj, repro.ois.bj))), "/", 
-  length(rownames(bj.repro)), 
-  " markers for reprogramming-induced senescence appear to be unique to this form of senescence induction."
+  length(rownames(bj.repro.up)) - length(union(repro.rs.bj, union(repro.sis.bj, repro.ois.bj))), "/", 
+  length(rownames(bj.repro.up)), 
+  " upregulated genes in reprogramming-induced senescence appear to be unique to this form of senescence induction."
 ))
 
 print(paste(
   length(repro.rs.bj), 
-  "markers for reprogramming-induced senescence are found among the markers for RS."
+  "upregulated genes for reprogramming-induced senescence are also among those of RS."
 ))
 print(paste(
   length(repro.sis.bj), 
-  "markers for reprogramming-induced senescence are found among the markers for SIS."
+  "upregulated genes in reprogramming-induced senescence are also among those of SIS."
 ))
 print(paste(
   length(repro.ois.bj), 
-  "markers for reprogramming-induced senescence are found among the markers for OIS."
+  "upregulated genes in reprogramming-induced senescence are also among those of OIS."
 ))
 
 print(paste(
   length(intersect(repro.rs.bj, repro.sis.bj)), 
-  "markers for reprogramming-induced senescence are found among markers common to RS and SIS."
+  "upregulated genes in reprogramming-induced senescence are also common to RS and SIS."
 ))
 print(paste(
   length(intersect(repro.rs.bj, repro.ois.bj)), 
-  "markers for reprogramming-induced senescence are found among markers common to RS and OIS."
+  "upregulated genes in reprogramming-induced senescence are also common to RS and OIS."
 ))
 print(paste(
   length(intersect(repro.sis.bj, repro.ois.bj)), 
-  "markers for reprogramming-induced senescence are found among markers common to SIS and OIS."
+  "upregulated genes in reprogramming-induced senescence are also common to SIS and OIS."
 ))
 print(paste(
   length(Reduce(intersect, list(repro.rs.bj, repro.sis.bj, repro.ois.bj))), 
-  "markers for reprogramming-induced senescence are also common to RS, SIS, and OIS."
+  "upregulated genes in reprogramming-induced senescence are also common to RS, SIS, and OIS."
+))
+
+# Downregulated
+repro.rs.bj <- which(rownames(bj.repro.down) %in% down.bj.rs[,"external_gene_id"])
+repro.sis.bj <- which(rownames(bj.repro.down) %in% rownames(down.bj.sis))
+repro.ois.bj <- which(rownames(bj.repro.down) %in% down.bj.ois[,"GeneID"])
+
+print(paste0(
+  length(union(repro.rs.bj, union(repro.sis.bj, repro.ois.bj))), "/", 
+  length(rownames(bj.repro.down)), 
+  " downregulated genes in reprogramming-induced senescence are also among those of another type of senescence induction."
+))
+print(paste0(
+  length(rownames(bj.repro.down)) - length(union(repro.rs.bj, union(repro.sis.bj, repro.ois.bj))), "/", 
+  length(rownames(bj.repro.down)), 
+  " downregulated genes in reprogramming-induced senescence appear to be unique to this form of senescence induction."
+))
+
+print(paste(
+  length(repro.rs.bj), 
+  "downregulated genes for reprogramming-induced senescence are also among those of RS."
+))
+print(paste(
+  length(repro.sis.bj), 
+  "downregulated genes in reprogramming-induced senescence are also among those of SIS."
+))
+print(paste(
+  length(repro.ois.bj), 
+  "downregulated genes in reprogramming-induced senescence are also among those of OIS."
+))
+
+print(paste(
+  length(intersect(repro.rs.bj, repro.sis.bj)), 
+  "downregulated genes in reprogramming-induced senescence are also common to RS and SIS."
+))
+print(paste(
+  length(intersect(repro.rs.bj, repro.ois.bj)), 
+  "downregulated genes in reprogramming-induced senescence are also common to RS and OIS."
+))
+print(paste(
+  length(intersect(repro.sis.bj, repro.ois.bj)), 
+  "downregulated genes in reprogramming-induced senescence are also common to SIS and OIS."
+))
+print(paste(
+  length(Reduce(intersect, list(repro.rs.bj, repro.sis.bj, repro.ois.bj))), 
+  "downregulated genes in reprogramming-induced senescence are also common to RS, SIS, and OIS."
 ))
 
 
-## UpSet plot for BJ cells
-# Create tables of reprogramming-induced SenSig markers and their presence as markers of other senescence types
-all.sen.genes <- Reduce(union, list(
-  rownames(bj.repro), 
-  unique(top.bj.rs[,"external_gene_id"]), 
-  rownames(top.bj.sis), 
-  unique(top.bj.ois[,"GeneID"])
+## UpSet plots for BJ cells
+# Create tables of upregulated and downregulated senescence genes in the various senotypes
+# Upregulated
+all.sen.upgenes <- Reduce(union, list(
+  rownames(bj.repro.up), 
+  unique(up.bj.rs[,"external_gene_id"]), 
+  rownames(up.bj.sis), 
+  unique(up.bj.ois[,"GeneID"])
 ))
-bj.senmarkers <- data.frame(matrix(
+bj.sengenes.up <- data.frame(matrix(
   data = FALSE, 
-  nrow = length(all.sen.genes), 
+  nrow = length(all.sen.upgenes), 
   ncol = 5
 ))
-colnames(bj.senmarkers) <- c("Gene", "Repro", "RS", "SIS", "OIS")
-bj.senmarkers$Gene <- all.sen.genes
+colnames(bj.sengenes.up) <- c("Gene", "Repro", "RS", "SIS", "OIS")
+bj.sengenes.up$Gene <- all.sen.upgenes
 
-for (gene in 1:nrow(bj.senmarkers)) {
-  gene.name <- bj.senmarkers$Gene[gene]
+for (gene in 1:nrow(bj.sengenes.up)) {
+  gene.name <- bj.sengenes.up$Gene[gene]
   
-  bj.senmarkers[gene, "Repro"] <- ifelse(
-    gene.name %in% rownames(bj.repro), 
+  bj.sengenes.up[gene, "Repro"] <- ifelse(
+    gene.name %in% rownames(bj.repro.up), 
     TRUE, FALSE
   )
-  bj.senmarkers[gene, "RS"] <- ifelse(
-    gene.name %in% unique(top.bj.rs[,"external_gene_id"]), 
+  bj.sengenes.up[gene, "RS"] <- ifelse(
+    gene.name %in% unique(up.bj.rs[,"external_gene_id"]), 
     TRUE, FALSE
   )
-  bj.senmarkers[gene, "SIS"] <- ifelse(
-    gene.name %in% rownames(top.bj.sis), 
+  bj.sengenes.up[gene, "SIS"] <- ifelse(
+    gene.name %in% rownames(up.bj.sis), 
     TRUE, FALSE
   )
-  bj.senmarkers[gene, "OIS"] <- ifelse(
-    gene.name %in% unique(top.bj.ois[,"GeneID"]), 
+  bj.sengenes.up[gene, "OIS"] <- ifelse(
+    gene.name %in% unique(up.bj.ois[,"GeneID"]), 
     TRUE, FALSE
   )
 }
 
-# Format table for use in ggupset
-tidy.bj.senmarkers <- as_tibble(bj.senmarkers)
-tidy.bj.senmarkers <- tidy.bj.senmarkers |> mutate(
+# Downregulated
+all.sen.downgenes <- Reduce(union, list(
+  rownames(bj.repro.down), 
+  unique(down.bj.rs[,"external_gene_id"]), 
+  rownames(down.bj.sis), 
+  unique(down.bj.ois[,"GeneID"])
+))
+bj.sengenes.down <- data.frame(matrix(
+  data = FALSE, 
+  nrow = length(all.sen.downgenes), 
+  ncol = 5
+))
+colnames(bj.sengenes.down) <- c("Gene", "Repro", "RS", "SIS", "OIS")
+bj.sengenes.down$Gene <- all.sen.downgenes
+
+for (gene in 1:nrow(bj.sengenes.down)) {
+  gene.name <- bj.sengenes.down$Gene[gene]
+  
+  bj.sengenes.down[gene, "Repro"] <- ifelse(
+    gene.name %in% rownames(bj.repro.down), 
+    TRUE, FALSE
+  )
+  bj.sengenes.down[gene, "RS"] <- ifelse(
+    gene.name %in% unique(down.bj.rs[,"external_gene_id"]), 
+    TRUE, FALSE
+  )
+  bj.sengenes.down[gene, "SIS"] <- ifelse(
+    gene.name %in% rownames(down.bj.sis), 
+    TRUE, FALSE
+  )
+  bj.sengenes.down[gene, "OIS"] <- ifelse(
+    gene.name %in% unique(down.bj.ois[,"GeneID"]), 
+    TRUE, FALSE
+  )
+}
+
+# Format tables for use in ggupset
+tidy.bj.sengenes.up <- as_tibble(bj.sengenes.up)
+tidy.bj.sengenes.up <- tidy.bj.sengenes.up |> mutate(
+  combination = pmap(
+    list(Repro, RS, SIS, OIS), 
+    \(lgl1, lgl2, lgl3, lgl4) {
+      c("Reprogramming", "Replicative", "Stress", "Oncogene")[c(lgl1, lgl2, lgl3, lgl4)]
+    }
+  )
+)
+
+tidy.bj.sengenes.down <- as_tibble(bj.sengenes.down)
+tidy.bj.sengenes.down <- tidy.bj.sengenes.down |> mutate(
   combination = pmap(
     list(Repro, RS, SIS, OIS), 
     \(lgl1, lgl2, lgl3, lgl4) {
@@ -209,13 +317,30 @@ tidy.bj.senmarkers <- tidy.bj.senmarkers |> mutate(
 )
 
 # Create and save UpSet plots
-bj.us <- tidy.bj.senmarkers |> 
+bj.us.up <- tidy.bj.sengenes.up |> 
   ggplot(aes(x = combination)) + geom_bar() + geom_text(
     stat = "count", aes(label = after_stat(count)), 
     vjust = -1, size = 6
   ) + scale_x_upset() + labs(
     x = element_blank(), 
-    y = "# of Genes"
+    y = "# of Upregulated Genes"
+  ) + theme(
+    legend.position = "none", 
+    text = element_text(size = 25)
+  ) + theme_combmatrix(
+    combmatrix.label.extra_spacing = 1, 
+    combmatrix.label.text = element_text(size = 15), 
+    combmatrix.panel.point.size = 5, 
+    combmatrix.panel.line.size = 1.7
+  )
+
+bj.us.down <- tidy.bj.sengenes.down |> 
+  ggplot(aes(x = combination)) + geom_bar() + geom_text(
+    stat = "count", aes(label = after_stat(count)), 
+    vjust = -1, size = 6
+  ) + scale_x_upset() + labs(
+    x = element_blank(), 
+    y = "# of Downregulated Genes"
   ) + theme(
     legend.position = "none", 
     text = element_text(size = 25)
@@ -227,39 +352,74 @@ bj.us <- tidy.bj.senmarkers |>
   )
 
 png(
-  filename = "../../Images/SenotypeComparisons/upsetplot_senmarkers.png", 
+  filename = "../../Images/SenotypeComparisons/upsetplot_sengenes_up.png", 
   width = 1680, height = 1800, res = 200
 )
-bj.us
+bj.us.up
 dev.off()
 
-# Save table of marker genes unique to reprogramming-induced senescence
-ris.specific <- vector(mode = "numeric", length = 439)
-for (gene in 1:nrow(tidy.bj.senmarkers)) {
-  if (identical(tidy.bj.senmarkers$combination[[gene]], c("Reprogramming"))) {
-    ris.specific[match(0, ris.specific)] <- gene
+png(
+  filename = "../../Images/SenotypeComparisons/upsetplot_sengenes_down.png", 
+  width = 1680, height = 1800, res = 200
+)
+bj.us.down
+dev.off()
+
+# Save tables of differentially expressed genes unique to reprogramming-induced senescence
+ris.spec.up <- vector(mode = "numeric", length = 439)
+for (gene in 1:nrow(tidy.bj.sengenes.up)) {
+  if (identical(tidy.bj.sengenes.up$combination[[gene]], c("Reprogramming"))) {
+    ris.spec.up[match(0, ris.spec.up)] <- gene
   }
 }
 
-specific.genes <- as.data.frame(tidy.bj.senmarkers[ris.specific, -ncol(tidy.bj.senmarkers)])
+spec.upgenes <- as.data.frame(tidy.bj.sengenes.up[ris.spec.up, -ncol(tidy.bj.sengenes.up)])
 write.table(
-  specific.genes, 
-  file = "senotype_reprogramming-specific_genes.tsv", 
+  spec.upgenes, 
+  file = "senotype_reprogramming-specific_upgenes.tsv", 
   row.names = FALSE, sep = "\t", qmethod = "double"
 )
 
-# Save table of marker genes common to all 4 forms of senescence induction
-all4 <- vector(mode = "numeric", length = 32)
-for (gene in 1:nrow(tidy.bj.senmarkers)) {
-  if (identical(tidy.bj.senmarkers$combination[[gene]], c("Reprogramming", "Replicative", "Stress", "Oncogene"))) {
-    all4[match(0, all4)] <- gene
+ris.spec.down <- vector(mode = "numeric", length = 439)
+for (gene in 1:nrow(tidy.bj.sengenes.down)) {
+  if (identical(tidy.bj.sengenes.down$combination[[gene]], c("Reprogramming"))) {
+    ris.spec.down[match(0, ris.spec.down)] <- gene
   }
 }
 
-common.genes <- as.data.frame(tidy.bj.senmarkers[all4,-ncol(tidy.bj.senmarkers)])
+spec.downgenes <- as.data.frame(tidy.bj.sengenes.down[ris.spec.down, -ncol(tidy.bj.sengenes.down)])
 write.table(
-  common.genes, 
-  file = "senotype_common_genes.tsv", 
+  spec.downgenes, 
+  file = "senotype_reprogramming-specific_downgenes.tsv", 
+  row.names = FALSE, sep = "\t", qmethod = "double"
+)
+
+# Save tables of marker genes common to all 4 forms of senescence induction
+all4.up <- vector(mode = "numeric", length = 32)
+for (gene in 1:nrow(tidy.bj.sengenes.up)) {
+  if (identical(tidy.bj.sengenes.up$combination[[gene]], c("Reprogramming", "Replicative", "Stress", "Oncogene"))) {
+    all4.up[match(0, all4.up)] <- gene
+  }
+}
+
+comm.upgenes <- as.data.frame(tidy.bj.sengenes.up[all4.up,-ncol(tidy.bj.sengenes.up)])
+write.table(
+  comm.upgenes, 
+  file = "senotype_common_upgenes.tsv", 
+  row.names = FALSE, sep = "\t", qmethod = "double"
+)
+
+all4.down <- vector(mode = "numeric", length = 32)
+for (gene in 1:nrow(tidy.bj.sengenes.down)) {
+  if (identical(tidy.bj.sengenes.down$combination[[gene]], c("Reprogramming", "Replicative", "Stress", "Oncogene"))) {
+    all4.down[match(0, all4.down)] <- gene
+  }
+}
+
+comm.downgenes <- as.data.frame(tidy.bj.sengenes.down[all4.down,-ncol(tidy.bj.sengenes.down)])
+write.table(
+  comm.downgenes, 
+  file = "senotype_common_downgenes.tsv", 
   row.names = FALSE, sep = "\t", qmethod = "double"
 )
 
