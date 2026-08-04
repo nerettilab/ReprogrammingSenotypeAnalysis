@@ -156,15 +156,19 @@ write.table(
 )
 
 
-## Identify markers of senescence
+## Identify genes upregulated and downregulated in senescence
 res <- res[which(res$padj < 0.05),]
-top.genes <- rownames(res[which(res$log2FoldChange > 0.5),])
-top.counts <- norm.counts[which(rownames(norm.counts) %in% top.genes),]
+up.genes <- rownames(res[which(res$log2FoldChange > 0.5),])
+up.counts <- norm.counts[which(rownames(norm.counts) %in% up.genes),]
+down.genes <- rownames(res[which(res$log2FoldChange < -0.5),])
+down.counts <- norm.counts[which(rownames(norm.counts) %in% down.genes),]
 
 # Save table of significantly upregulated genes during senescence
 write.table(
-  top.counts, file = "../Tables/SenotypeComparisons/sen_genes_normalized_repro.tsv", 
+  up.counts, file = "../Tables/SenotypeComparisons/sen_upgenes_normalized_repro.tsv", 
   sep = "\t", qmethod = "double"
 )
-
-
+write.table(
+  down.counts, file = "../Tables/SenotypeComparisons/sen_downgenes_normalized_repro.tsv", 
+  sep = "\t", qmethod = "double"
+)
