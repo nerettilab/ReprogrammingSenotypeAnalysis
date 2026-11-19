@@ -10,6 +10,7 @@ library(monocle3)
 library(org.Hs.eg.db)
 library(clusterProfiler)
 library(stringr)
+library(lisi)
 
 combined <- readRDS("combined.rds")
 cds.subset.som1 <- readRDS("cds.subset.som1.rds")
@@ -68,8 +69,63 @@ png(
 dp.traj.split
 dev.off()
 
+# Determine impact of batch effects on somatic cluster 1
+embeddings <- Embeddings(combined, reduction = "rpca")
+som1 <- rownames(metadata[which(metadata$Trajectory == "Somatic 1"),])
+som2 <- rownames(metadata[which(metadata$Trajectory == "Somatic 2"),])
+
+embed.som1 <- embeddings[som1, , drop = FALSE]
+embed.som2 <- embeddings[som2, , drop = FALSE]
+
+lisi.res1 <- as.data.frame(compute_lisi(
+  X = embed.som1, meta_data = metadata[som1,], 
+  label_colnames = "dataset"
+))
+lisi.res2 <- as.data.frame(compute_lisi(
+  X = embed.som2, meta_data = metadata[som2,], 
+  label_colnames = "dataset"
+))
+
+ggplot(
+  data = lisi.res1,
+  aes(x = dataset)
+) + geom_histogram(
+  bins = 10, center = 0.5, 
+  closed = "left"
+) + labs(
+  x = "LISI Score", y = "# of cells", 
+  title = "LISI for Somatic 1"
+) + scale_x_continuous(
+  breaks = seq(1, 2.2, 0.2), 
+  limits = c(1, 2)
+) + theme(
+  axis.title = element_text(size = 25), 
+  axis.text = element_text(size = 21), 
+  plot.title = element_text(size = 25, hjust = 0.5)
+)
+
+ggplot(
+  data = lisi.res2,
+  aes(x = dataset)
+) + geom_histogram(
+  bins = 10, center = 0.5, 
+  closed = "left"
+) + labs(
+  x = "LISI Score", y = "# of cells", 
+  title = "LISI for Somatic 2"
+) + scale_x_continuous(
+  breaks = seq(1, 2.2, 0.2), 
+  limits = c(1, 2)
+) + theme(
+  axis.title = element_text(size = 25), 
+  axis.text = element_text(size = 21), 
+  plot.title = element_text(size = 25, hjust = 0.5)
+)
+
 # Garbage collection
-rm(cds.subset.plu, cds.subset.som1, cds.subset.som2, metadata, cells.som1, cells.som2, cells.plu)
+rm(cds.subset.plu, cds.subset.som1, cds.subset.som2, 
+   metadata, cells.som1, cells.som2, cells.plu, embeddings, 
+   som1, som2, embed.som1, embed.som2, lisi.res1, lisi.res2)
 gc(reset = TRUE)
 
 
@@ -77,8 +133,16 @@ gc(reset = TRUE)
 ## Pluripotent: DPPA4, SEMA6A, EPCAM
 ## Somatic: MFAP5, TGFBI, MMP2
 combined.aftersplit <- subset(combined, Trajectory != "Before Split")
-timepoints.aftersplit <- c("D07-P", "D08-X", "D09-P", "D11-P", "D12-X", "D13-P", "D15-P", "D16-X")
-genes.of.interest <- c("NANOG", "DPPA4", "SEMA6A", "EPCAM", "COL3A1", "MFAP5", "TGFBI", "MMP2", "CDKN1A", "CDKN2A", "TP53")
+timepoints.aftersplit <- c(
+  "D07-P", "D08-X", "D09-P", "D11-P", 
+  "D12-X", "D13-P", "D15-P", "D16-X"
+)
+genes.of.interest <- c(
+  "NANOG", "DPPA4", "SEMA6A", "EPCAM", 
+  "POU5F1", "SOX2", "KLF4", "MYC", 
+  "COL3A1", "MFAP5", "TGFBI", "MMP2", 
+  "CDKN1A", "CDKN2A", "TP53", "LMNB1"
+)
 
 # Create data frames for statistical significance markers
 sig.df.plu_vs_som1 <- data.frame(matrix(
@@ -223,6 +287,7 @@ for (gene in colnames(sig.df.plu_vs_som1)) {
   
   
   # Create initial violin plots
+  plot.title = ifelse(gene == "POU5F1", "OCT4", gene)
   vp <- VlnPlot(
     object = combined.aftersplit, features = gene, 
     cols = c("#7CAE00", "#00BFC4", "#C77CFF"), 
@@ -232,7 +297,7 @@ for (gene in colnames(sig.df.plu_vs_som1)) {
     text = element_text(size = 30), 
     axis.text = element_text(size = 21), 
     legend.key.size = unit(1.15, "cm")
-  ) + labs(x = "Timepoint")
+  ) + labs(x = "Timepoint", title = plot.title)
   
   
   # Variables to handle spacing of statistical significance markers
@@ -333,7 +398,7 @@ for (gene in colnames(sig.df.plu_vs_som1)) {
   
   
   # Assign variable to completed violin plot
-  assign(paste0("vp.", gene), vp)
+  assign(paste0("vp.", plot.title), vp)
   
   gc()
 }
@@ -363,6 +428,32 @@ png(
 )
 vp.EPCAM
 dev.off()
+
+png(
+  filename = "../../Images/HumanReprogramming/xing+pana_ViolinPlot_OCT4.png", 
+  width = 1550, height = 1100, res = 140
+)
+vp.OCT4
+dev.off()
+png(
+  filename = "../../Images/HumanReprogramming/xing+pana_ViolinPlot_SOX2.png", 
+  width = 1550, height = 1100, res = 140
+)
+vp.SOX2
+dev.off()
+png(
+  filename = "../../Images/HumanReprogramming/xing+pana_ViolinPlot_KLF4.png", 
+  width = 1550, height = 1100, res = 140
+)
+vp.KLF4
+dev.off()
+png(
+  filename = "../../Images/HumanReprogramming/xing+pana_ViolinPlot_MYC.png", 
+  width = 1550, height = 1100, res = 140
+)
+vp.MYC
+dev.off()
+
 png(
   filename = "../../Images/HumanReprogramming/xing+pana_ViolinPlot_COL3A1.png", 
   width = 1550, height = 1100, res = 140
@@ -387,6 +478,7 @@ png(
 )
 vp.MMP2
 dev.off()
+
 png(
   filename = "../../Images/HumanReprogramming/xing+pana_ViolinPlot_CDKN1A.png", 
   width = 1550, height = 1100, res = 140
@@ -404,6 +496,12 @@ png(
   width = 1550, height = 1100, res = 140
 )
 vp.TP53
+dev.off()
+png(
+  filename = "../../Images/HumanReprogramming/xing+pana_ViolinPlot_LMNB1.png", 
+  width = 1550, height = 1100, res = 140
+)
+vp.LMNB1
 dev.off()
 
 

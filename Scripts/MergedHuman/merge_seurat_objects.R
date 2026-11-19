@@ -153,6 +153,56 @@ fp.epcam <- FeaturePlot(
   legend.key.size = unit(1.25, "cm")
 )
 
+fp.oct4 <- FeaturePlot(
+  object = combined, 
+  features = "POU5F1", 
+  order = TRUE
+) + labs(
+  x = "UMAP 1", y = "UMAP 2", 
+  title = "OCT4"
+) + theme(
+  text = element_text(size = 30), 
+  axis.text = element_blank(), 
+  axis.ticks = element_blank(), 
+  legend.key.size = unit(1.25, "cm")
+)
+fp.sox2 <- FeaturePlot(
+  object = combined, 
+  features = "SOX2", 
+  order = TRUE
+) + labs(
+  x = "UMAP 1", y = "UMAP 2"
+) + theme(
+  text = element_text(size = 30), 
+  axis.text = element_blank(), 
+  axis.ticks = element_blank(), 
+  legend.key.size = unit(1.25, "cm")
+)
+fp.klf4 <- FeaturePlot(
+  object = combined, 
+  features = "KLF4", 
+  order = TRUE
+) + labs(
+  x = "UMAP 1", y = "UMAP 2"
+) + theme(
+  text = element_text(size = 30), 
+  axis.text = element_blank(), 
+  axis.ticks = element_blank(), 
+  legend.key.size = unit(1.25, "cm")
+)
+fp.myc <- FeaturePlot(
+  object = combined, 
+  features = "MYC", 
+  order = TRUE
+) + labs(
+  x = "UMAP 1", y = "UMAP 2"
+) + theme(
+  text = element_text(size = 30), 
+  axis.text = element_blank(), 
+  axis.ticks = element_blank(), 
+  legend.key.size = unit(1.25, "cm")
+)
+
 fp.col3a1 <- FeaturePlot(
   object = combined, 
   features = "COL3A1", 
@@ -238,6 +288,18 @@ fp.tp53 <- FeaturePlot(
   axis.ticks = element_blank(), 
   legend.key.size = unit(1.25, "cm")
 )
+fp.lmnb1 <- FeaturePlot(
+  object = combined, 
+  features = "LMNB1", 
+  order = TRUE
+) + labs(
+  x = "UMAP 1", y = "UMAP 2"
+) + theme(
+  text = element_text(size = 30), 
+  axis.text = element_blank(), 
+  axis.ticks = element_blank(), 
+  legend.key.size = unit(1.25, "cm")
+)
 
 png(
   filename = "../../Images/HumanReprogramming/xing+pana_FeaturePlot_NANOG.png", 
@@ -263,6 +325,32 @@ png(
 )
 fp.epcam
 dev.off()
+
+png(
+  filename = "../../Images/HumanReprogramming/xing+pana_FeaturePlot_OCT4.png", 
+  width = 1300, height = 1000, res = 140
+)
+fp.oct4
+dev.off()
+png(
+  filename = "../../Images/HumanReprogramming/xing+pana_FeaturePlot_SOX2.png", 
+  width = 1300, height = 1000, res = 140
+)
+fp.sox2
+dev.off()
+png(
+  filename = "../../Images/HumanReprogramming/xing+pana_FeaturePlot_KLF4.png", 
+  width = 1350, height = 1000, res = 140
+)
+fp.klf4
+dev.off()
+png(
+  filename = "../../Images/HumanReprogramming/xing+pana_FeaturePlot_MYC.png", 
+  width = 1300, height = 1000, res = 140
+)
+fp.myc
+dev.off()
+
 png(
   filename = "../../Images/HumanReprogramming/xing+pana_FeaturePlot_COL3A1.png", 
   width = 1300, height = 1000, res = 140
@@ -287,6 +375,7 @@ png(
 )
 fp.mmp2
 dev.off()
+
 png(
   filename = "../../Images/HumanReprogramming/xing+pana_FeaturePlot_CDKN1A.png", 
   width = 1300, height = 1000, res = 140
@@ -304,6 +393,12 @@ png(
   width = 1350, height = 1000, res = 140
 )
 fp.tp53
+dev.off()
+png(
+  filename = "../../Images/HumanReprogramming/xing+pana_FeaturePlot_LMNB1.png", 
+  width = 1350, height = 1000, res = 140
+)
+fp.lmnb1
 dev.off()
 
 

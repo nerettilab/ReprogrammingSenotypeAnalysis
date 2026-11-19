@@ -5,6 +5,7 @@ setwd("Data/MergedHuman/")
 library(Seurat)
 library(ggplot2)
 library(biomaRt)
+library(MatrisomeAnalyzeR)
 
 combined <- readRDS("combined.rds")
 
@@ -63,7 +64,7 @@ dev.off()
 
 # Markers of CDKN1A-high, CDKN2A-high, and double-high cells
 Idents(combined) <- "Expression"
-for (category in c("CDKN1A", "CDKN2A", "Both")) {
+for (category in unique(combined$Expression)) {
   # Only consider genes found in ≥30% of cells in category of interest
   # Only consider genes with a log2FC ≥ 0.5
   markers <- FindConservedMarkers(
@@ -83,9 +84,19 @@ for (category in c("CDKN1A", "CDKN2A", "Both")) {
   markers <- markers[order(markers$AVG_avg_log2FC, decreasing = TRUE),]
   
   assign(paste0("markers.", category), markers)
+  
+  # Check ECM enrichment: subset markers that are a part of the Matrisome gene set
+  markers$Gene <- rownames(markers)
+  matr <- matriannotate(
+    data = markers, gene.column = "Gene", 
+    species = "human"
+  )
+  matr <- matr[matr$`Annotated Matrisome Division` != "Non-matrisome",]
+  
+  assign(paste0("matr.", category), matr)
+  
   gc()
 }
-
 
 print(paste(
   length(rownames(markers.CDKN1A)), 
@@ -103,6 +114,23 @@ print(paste(
   "There were a total of", 
   length(unique(c(rownames(markers.Both), rownames(markers.CDKN1A), rownames(markers.CDKN2A)))), 
   "unique identified markers."
+))
+
+print(paste(
+  "# of 'Double-high' markers that are part of Matrisome:", 
+  length(unique(matr.Both$`Annotated Gene`))
+))
+print(paste(
+  "# of 'CDKN1A-high' markers that are part of Matrisome:", 
+  length(unique(matr.CDKN1A$`Annotated Gene`))
+))
+print(paste(
+  "# of 'CDKN2A-high' markers that are part of Matrisome:", 
+  length(unique(matr.CDKN2A$`Annotated Gene`))
+))
+print(paste(
+  "# of 'Neither' markers that are part of Matrisome:", 
+  length(unique(matr.Neither$`Annotated Gene`))
 ))
 
 
@@ -174,8 +202,8 @@ write.table(
 
 ## SenSig
 # Download human and mouse biomaRt databases
-human.mart = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-mouse.mart = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+human.mart = useEnsembl("genes", dataset = "hsapiens_gene_ensembl")
+mouse.mart = useEnsembl("genes", dataset = "mmusculus_gene_ensembl")
 
 # Create list of relevant genes from SenSig
 ss.filepaths = c(
@@ -211,42 +239,37 @@ for (i in 1:length(ss.filepaths)) {
   
   ## Obtain gene names from table
   if ("gene" %in% colnames(senfile)) {
-    
     genes <- senfile$gene
-    
-    # Obtain Ensembl IDs of mouse genes
-    bm.mouse <- getBM(
-      attributes = c("ensembl_gene_id", "external_gene_name", "mgi_symbol"), 
-      filters = "external_gene_name", 
-      values = genes, 
-      mart = mouse.mart
-    )
-    
-    # Retrieve Ensembl IDs of homologous human genes
-    homologs <- getHomologs(bm.mouse$ensembl_gene_id, "mus_musculus", "homo_sapiens")
-    homolog.ids <- unique(homologs$hsapiens_homolog_ensembl_gene)
-    homolog.ids <- homolog.ids[which(homolog.ids != "")]
-    
-    # Convert Ensembl IDs to human gene symbols
-    bm.human <- getBM(
-      attributes = c("ensembl_gene_id", "external_gene_name", "hgnc_symbol"), 
-      filters = "ensembl_gene_id", 
-      values = homolog.ids, 
-      mart = human.mart
-    )
-    genes <- unique(bm.human$external_gene_name)
-    genes <- genes[which(genes != "")]
-    
   } else {
-    
     genes <- rownames(senfile)
-    
   }
   
   gene.names[[i]] <- genes
 }
-
 sensig.genes <- unique(unlist(gene.names))
+
+# Obtain Ensembl IDs of mouse genes
+bm.mouse <- getBM(
+  attributes = c("ensembl_gene_id", "external_gene_name", "mgi_symbol"), 
+  filters = "external_gene_name", 
+  values = sensig.genes, 
+  mart = mouse.mart
+)
+
+# Retrieve Ensembl IDs of homologous human genes
+homologs <- getHomologs(bm.mouse$ensembl_gene_id, "mus_musculus", "homo_sapiens")
+homolog.ids <- unique(homologs$hsapiens_homolog_ensembl_gene)
+homolog.ids <- homolog.ids[which(homolog.ids != "")]
+
+# Convert Ensembl IDs to human gene symbols
+bm.human <- getBM(
+  attributes = c("ensembl_gene_id", "external_gene_name", "hgnc_symbol"), 
+  filters = "ensembl_gene_id", 
+  values = homolog.ids, 
+  mart = human.mart
+)
+sensig.genes <- unique(bm.human$external_gene_name)
+sensig.genes <- sensig.genes[which(sensig.genes != "")]
 
 # Search for SenSig genes within markers
 ss.Both <- markers.Both[which(rownames(markers.Both) %in% sensig.genes),]
@@ -307,7 +330,7 @@ for (gene in sensig.markers$Gene) {
 }
 
 write.table(
-  sensig.markers, file = "../../Tables/sensig_markers_xing+pana.tsv", 
+  sensig.markers, file = "../../Tables/HumanMouseComparisons/sensig_markers_xing+pana.tsv", 
   sep = "\t", row.names = FALSE, qmethod = "double"
 )
 
