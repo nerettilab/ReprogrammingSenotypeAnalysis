@@ -10,7 +10,6 @@ library(monocle3)
 library(org.Hs.eg.db)
 library(clusterProfiler)
 library(stringr)
-library(lisi)
 
 combined <- readRDS("combined.rds")
 cds.subset.som1 <- readRDS("cds.subset.som1.rds")
@@ -69,63 +68,9 @@ png(
 dp.traj.split
 dev.off()
 
-# Determine impact of batch effects on somatic cluster 1
-embeddings <- Embeddings(combined, reduction = "rpca")
-som1 <- rownames(metadata[which(metadata$Trajectory == "Somatic 1"),])
-som2 <- rownames(metadata[which(metadata$Trajectory == "Somatic 2"),])
-
-embed.som1 <- embeddings[som1, , drop = FALSE]
-embed.som2 <- embeddings[som2, , drop = FALSE]
-
-lisi.res1 <- as.data.frame(compute_lisi(
-  X = embed.som1, meta_data = metadata[som1,], 
-  label_colnames = "dataset"
-))
-lisi.res2 <- as.data.frame(compute_lisi(
-  X = embed.som2, meta_data = metadata[som2,], 
-  label_colnames = "dataset"
-))
-
-ggplot(
-  data = lisi.res1,
-  aes(x = dataset)
-) + geom_histogram(
-  bins = 10, center = 0.5, 
-  closed = "left"
-) + labs(
-  x = "LISI Score", y = "# of cells", 
-  title = "LISI for Somatic 1"
-) + scale_x_continuous(
-  breaks = seq(1, 2.2, 0.2), 
-  limits = c(1, 2)
-) + theme(
-  axis.title = element_text(size = 25), 
-  axis.text = element_text(size = 21), 
-  plot.title = element_text(size = 25, hjust = 0.5)
-)
-
-ggplot(
-  data = lisi.res2,
-  aes(x = dataset)
-) + geom_histogram(
-  bins = 10, center = 0.5, 
-  closed = "left"
-) + labs(
-  x = "LISI Score", y = "# of cells", 
-  title = "LISI for Somatic 2"
-) + scale_x_continuous(
-  breaks = seq(1, 2.2, 0.2), 
-  limits = c(1, 2)
-) + theme(
-  axis.title = element_text(size = 25), 
-  axis.text = element_text(size = 21), 
-  plot.title = element_text(size = 25, hjust = 0.5)
-)
-
 # Garbage collection
 rm(cds.subset.plu, cds.subset.som1, cds.subset.som2, 
-   metadata, cells.som1, cells.som2, cells.plu, embeddings, 
-   som1, som2, embed.som1, embed.som2, lisi.res1, lisi.res2)
+   metadata, cells.som1, cells.som2, cells.plu)
 gc(reset = TRUE)
 
 
