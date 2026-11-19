@@ -42,18 +42,18 @@ Rscript Scripts/Schiebinger2019/senescence_gene_analysis.R
 Rscript Scripts/HumanMouseComparisons/find_common_senescence_markers.R
 
 # Download data from publically available data sets of senescence induction
-humandir="Data/SenotypeComparisons"
+datadir="Data/SenotypeComparisons"
 
-wget -O $humandir/BJ_SIS_alspach2014_young_9_11.txt.gz https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1358nnn/GSM1358449/suppl/GSM1358449_CCGATTA_gene_counts.txt.gz
-wget -O $humandir/BJ_SIS_alspach2014_young_9_24.txt.gz https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1358nnn/GSM1358452/suppl/GSM1358452_TACTCTA_gene_counts.txt.gz
-wget -O $humandir/BJ_SIS_alspach2014_sen_9_11.txt.gz https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1358nnn/GSM1358451/suppl/GSM1358451_GGCAGCG_gene_counts.txt.gz
-wget -O $humandir/BJ_SIS_alspach2014_sen_9_24.txt.gz https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1358nnn/GSM1358447/suppl/GSM1358447_AGACTGA_gene_counts.txt.gz
+wget -O $datadir/BJ_SIS_alspach2014_young_9_11.txt.gz https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1358nnn/GSM1358449/suppl/GSM1358449_CCGATTA_gene_counts.txt.gz
+wget -O $datadir/BJ_SIS_alspach2014_young_9_24.txt.gz https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1358nnn/GSM1358452/suppl/GSM1358452_TACTCTA_gene_counts.txt.gz
+wget -O $datadir/BJ_SIS_alspach2014_sen_9_11.txt.gz https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1358nnn/GSM1358451/suppl/GSM1358451_GGCAGCG_gene_counts.txt.gz
+wget -O $datadir/BJ_SIS_alspach2014_sen_9_24.txt.gz https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1358nnn/GSM1358447/suppl/GSM1358447_AGACTGA_gene_counts.txt.gz
 
-wget -O $humandir/BJ_OIS_loayza-puch2013_FPKM.txt.gz https://ftp.ncbi.nlm.nih.gov/geo/series/GSE42nnn/GSE42509/suppl/GSE42509_PQST_rna_rp_fpkms.txt.gz
+wget -O $datadir/BJ_OIS_loayza-puch2013_FPKM.txt.gz https://ftp.ncbi.nlm.nih.gov/geo/series/GSE42nnn/GSE42509/suppl/GSE42509_PQST_rna_rp_fpkms.txt.gz
 
-wget -O $humandir/BJ_RS_marthandam2016_RPKM.xls.gz https://ftp.ncbi.nlm.nih.gov/geo/series/GSE63nnn/GSE63577/suppl/GSE63577_counts_rpkm_exvivo_jenage_data.xls.gz
+wget -O $datadir/BJ_RS_marthandam2016_RPKM.xls.gz https://ftp.ncbi.nlm.nih.gov/geo/series/GSE63nnn/GSE63577/suppl/GSE63577_counts_rpkm_exvivo_jenage_data.xls.gz
 
-gunzip $humandir/*.gz
+gunzip $datadir/*.gz
 
 # Collapse single-cell reprogramming data sets into pseudo-bulk for comparisons with senescence data
 Rscript Scripts/SenotypeComparisons/collapse_into_pseudobulk.R
