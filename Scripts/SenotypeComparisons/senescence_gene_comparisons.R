@@ -49,8 +49,19 @@ norm.counts.bj.rs <- cbind(
   external_gene_id = bj.rs$external_gene_id
 )
 
-res.bj.rs <- results(dds.bj.rs)
+res.bj.rs <- lfcShrink(
+  dds = dds.bj.rs,
+  coef = "condition_Senescent_vs_Proliferating"
+)
 res.bj.rs <- res.bj.rs[which(res.bj.rs$padj < 0.05),]
+res.bj.rs <- as.data.frame(res.bj.rs[order(res.bj.rs$log2FoldChange, decreasing = TRUE),])
+res.bj.rs$external_gene_id <- NA
+for (row in rownames(res.bj.rs)) {
+  res.bj.rs[row, "external_gene_id"] <- bj.rs[bj.rs$ensembl_gene_id == row, "external_gene_id"]
+}
+res.bj.rs <- res.bj.rs[res.bj.rs$external_gene_id != "",]
+res.bj.rs <- res.bj.rs[complete.cases(res.bj.rs),]
+norm.counts.bj.rs <- as.data.frame(norm.counts.bj.rs[which(rownames(norm.counts.bj.rs) %in% rownames(res.bj.rs)),])
 
 up.genes.rs <- rownames(res.bj.rs[which(res.bj.rs$log2FoldChange > 0.5),])
 up.bj.rs <- norm.counts.bj.rs[which(rownames(norm.counts.bj.rs) %in% up.genes.rs),]
@@ -79,8 +90,15 @@ dds.bj.sis <- DESeqDataSetFromMatrix(
 dds.bj.sis <- DESeq(dds.bj.sis)
 norm.counts.bj.sis <- counts(dds.bj.sis, normalized = TRUE)
 
-res.bj.sis <- results(dds.bj.sis)
+res.bj.sis <- lfcShrink(
+  dds = dds.bj.sis,
+  coef = "condition_Senescent_vs_Proliferating", 
+  type = "apeglm"
+)
 res.bj.sis <- res.bj.sis[which(res.bj.sis$padj < 0.05),]
+res.bj.sis <- as.data.frame(res.bj.sis[order(res.bj.sis$log2FoldChange, decreasing = TRUE),])
+res.bj.sis <- res.bj.sis[complete.cases(res.bj.sis),]
+norm.counts.bj.sis <- as.data.frame(norm.counts.bj.sis[which(rownames(norm.counts.bj.sis) %in% rownames(res.bj.sis)),])
 
 up.genes.sis <- rownames(res.bj.sis[which(res.bj.sis$log2FoldChange > 0.5),])
 up.bj.sis <- norm.counts.bj.sis[which(rownames(norm.counts.bj.sis) %in% up.genes.sis),]
@@ -115,8 +133,19 @@ norm.counts.bj.ois <- cbind(
   GeneID = gene.symbols.bj.ois
 )
 
-res.bj.ois <- results(dds.bj.ois)
+res.bj.ois <- lfcShrink(
+  dds = dds.bj.ois,
+  coef = "condition_Senescent_vs_Proliferating", 
+  type = "apeglm"
+)
 res.bj.ois <- res.bj.ois[which(res.bj.ois$padj < 0.05),]
+res.bj.ois <- as.data.frame(res.bj.ois[order(res.bj.ois$log2FoldChange, decreasing = TRUE),])
+res.bj.ois$GeneID <- NA
+for (row in rownames(res.bj.ois)) {
+  res.bj.ois[row, "GeneID"] <- norm.counts.bj.ois[rownames(norm.counts.bj.ois) == row, "GeneID"]
+}
+res.bj.ois <- res.bj.ois[complete.cases(res.bj.ois),]
+norm.counts.bj.ois <- as.data.frame(norm.counts.bj.ois[which(rownames(norm.counts.bj.ois) %in% rownames(res.bj.ois)),])
 
 up.genes.ois <- rownames(res.bj.ois[which(res.bj.ois$log2FoldChange > 0.5),])
 up.bj.ois <- norm.counts.bj.ois[which(rownames(norm.counts.bj.ois) %in% up.genes.ois),]
@@ -127,8 +156,8 @@ down.bj.ois <- norm.counts.bj.ois[which(rownames(norm.counts.bj.ois) %in% down.g
 down.bj.ois <- down.bj.ois[which(down.bj.ois[,"GeneID"] != ""),]
 
 
-## Compare genes differentially expressed in reprogramming-induced senescent cells with those of other senotypes
-# Upregulated
+## Compare genes upregulated in reprogramming-induced senescent cells with those of other senotypes
+# BJ cells (Human)
 repro.rs.bj <- which(rownames(bj.repro.up) %in% up.bj.rs[,"external_gene_id"])
 repro.sis.bj <- which(rownames(bj.repro.up) %in% rownames(up.bj.sis))
 repro.ois.bj <- which(rownames(bj.repro.up) %in% up.bj.ois[,"GeneID"])
@@ -174,7 +203,9 @@ print(paste(
   "upregulated genes in reprogramming-induced senescence are also common to RS, SIS, and OIS."
 ))
 
-# Downregulated
+
+## Compare genes downregulated in reprogramming-induced senescent cells with those of other senotypes
+# BJ cells (Human)
 repro.rs.bj <- which(rownames(bj.repro.down) %in% down.bj.rs[,"external_gene_id"])
 repro.sis.bj <- which(rownames(bj.repro.down) %in% rownames(down.bj.sis))
 repro.ois.bj <- which(rownames(bj.repro.down) %in% down.bj.ois[,"GeneID"])
@@ -366,69 +397,93 @@ bj.us.down
 dev.off()
 
 # Save tables of differentially expressed genes unique to reprogramming-induced senescence
-ris.spec.up <- vector(mode = "numeric", length = 439)
+ris.spec.up <- vector(mode = "numeric", length = nrow(tidy.bj.sengenes.up))
 for (gene in 1:nrow(tidy.bj.sengenes.up)) {
   if (identical(tidy.bj.sengenes.up$combination[[gene]], c("Reprogramming"))) {
     ris.spec.up[match(0, ris.spec.up)] <- gene
   }
 }
+ris.spec.up <- setdiff(ris.spec.up, 0)
 
-spec.upgenes <- as.data.frame(tidy.bj.sengenes.up[ris.spec.up, -ncol(tidy.bj.sengenes.up)])
+spec.upgenes <- bj.repro.up[which(rownames(bj.repro.up) %in% tidy.bj.sengenes.up$Gene[ris.spec.up]),]
+spec.upgenes$AVG_Pro <- (spec.upgenes$Xing_Pro + spec.upgenes$Panariello_Pro) / 2
+spec.upgenes$AVG_Sen <- (spec.upgenes$Xing_Sen + spec.upgenes$Panariello_Sen) / 2
+spec.upgenes$AVG_SenRatio <- spec.upgenes$AVG_Sen / spec.upgenes$AVG_Pro
+spec.upgenes <- spec.upgenes[order(spec.upgenes$AVG_SenRatio, decreasing = TRUE),]
+
 write.table(
   spec.upgenes, 
   file = "senotype_reprogramming-specific_upgenes.tsv", 
-  row.names = FALSE, sep = "\t", qmethod = "double"
+  sep = "\t", qmethod = "double"
 )
 
-ris.spec.down <- vector(mode = "numeric", length = 439)
+ris.spec.down <- vector(mode = "numeric", length = nrow(tidy.bj.sengenes.down))
 for (gene in 1:nrow(tidy.bj.sengenes.down)) {
   if (identical(tidy.bj.sengenes.down$combination[[gene]], c("Reprogramming"))) {
     ris.spec.down[match(0, ris.spec.down)] <- gene
   }
 }
+ris.spec.down <- setdiff(ris.spec.down, 0)
 
-spec.downgenes <- as.data.frame(tidy.bj.sengenes.down[ris.spec.down, -ncol(tidy.bj.sengenes.down)])
+spec.downgenes <- bj.repro.down[which(rownames(bj.repro.down) %in% tidy.bj.sengenes.down$Gene[ris.spec.down]),]
+spec.downgenes$AVG_Pro <- (spec.downgenes$Xing_Pro + spec.downgenes$Panariello_Pro) / 2
+spec.downgenes$AVG_Sen <- (spec.downgenes$Xing_Sen + spec.downgenes$Panariello_Sen) / 2
+spec.downgenes$AVG_SenRatio <- spec.downgenes$AVG_Sen / spec.downgenes$AVG_Pro
+spec.downgenes <- spec.downgenes[order(spec.downgenes$AVG_SenRatio, decreasing = FALSE),]
+
 write.table(
   spec.downgenes, 
   file = "senotype_reprogramming-specific_downgenes.tsv", 
-  row.names = FALSE, sep = "\t", qmethod = "double"
+  sep = "\t", qmethod = "double"
 )
 
 # Save tables of marker genes common to all 4 forms of senescence induction
-all4.up <- vector(mode = "numeric", length = 32)
+all4.up <- vector(mode = "numeric", length = nrow(tidy.bj.sengenes.up))
 for (gene in 1:nrow(tidy.bj.sengenes.up)) {
   if (identical(tidy.bj.sengenes.up$combination[[gene]], c("Reprogramming", "Replicative", "Stress", "Oncogene"))) {
     all4.up[match(0, all4.up)] <- gene
   }
 }
+all4.up <- setdiff(all4.up, 0)
 
-comm.upgenes <- as.data.frame(tidy.bj.sengenes.up[all4.up,-ncol(tidy.bj.sengenes.up)])
+comm.upgenes <- bj.repro.up[which(rownames(bj.repro.up) %in% tidy.bj.sengenes.up$Gene[all4.up]),]
+comm.upgenes$AVG_Pro <- (comm.upgenes$Xing_Pro + comm.upgenes$Panariello_Pro) / 2
+comm.upgenes$AVG_Sen <- (comm.upgenes$Xing_Sen + comm.upgenes$Panariello_Sen) / 2
+comm.upgenes$AVG_SenRatio <- comm.upgenes$AVG_Sen / comm.upgenes$AVG_Pro
+comm.upgenes <- comm.upgenes[order(comm.upgenes$AVG_SenRatio, decreasing = TRUE),]
+
 write.table(
   comm.upgenes, 
   file = "senotype_common_upgenes.tsv", 
-  row.names = FALSE, sep = "\t", qmethod = "double"
+  sep = "\t", qmethod = "double"
 )
 
-all4.down <- vector(mode = "numeric", length = 32)
+all4.down <- vector(mode = "numeric", length = nrow(tidy.bj.sengenes.down))
 for (gene in 1:nrow(tidy.bj.sengenes.down)) {
   if (identical(tidy.bj.sengenes.down$combination[[gene]], c("Reprogramming", "Replicative", "Stress", "Oncogene"))) {
     all4.down[match(0, all4.down)] <- gene
   }
 }
+all4.down <- setdiff(all4.down, 0)
 
-comm.downgenes <- as.data.frame(tidy.bj.sengenes.down[all4.down,-ncol(tidy.bj.sengenes.down)])
+comm.downgenes <- bj.repro.down[which(rownames(bj.repro.down) %in% tidy.bj.sengenes.down$Gene[all4.down]),]
+comm.downgenes$AVG_Pro <- (comm.downgenes$Xing_Pro + comm.downgenes$Panariello_Pro) / 2
+comm.downgenes$AVG_Sen <- (comm.downgenes$Xing_Sen + comm.downgenes$Panariello_Sen) / 2
+comm.downgenes$AVG_SenRatio <- comm.downgenes$AVG_Sen / comm.downgenes$AVG_Pro
+comm.downgenes <- comm.downgenes[order(comm.downgenes$AVG_SenRatio, decreasing = FALSE),]
+
 write.table(
   comm.downgenes, 
   file = "senotype_common_downgenes.tsv", 
-  row.names = FALSE, sep = "\t", qmethod = "double"
+  sep = "\t", qmethod = "double"
 )
 
 
-## GO/KEGG Analysis of RIS-specific marker genes
+## GO/KEGG Analysis of RIS-specific upregulated genes
 ## (All RIS markers)
 # Create new gene set
 genes.df <- bitr(
-  rownames(bj.repro),
+  rownames(bj.repro.up),
   fromType = "SYMBOL",
   toType = "ENTREZID",
   OrgDb = org.Hs.eg.db,
@@ -439,53 +494,51 @@ genes.df <- bitr(
 genes.df[which(genes.df$SYMBOL == "LINC01137"), "ENTREZID"] <- 728431
 genes.df[which(genes.df$SYMBOL == "KIAA1324"), "ENTREZID"] <- 57535
 genes.df[which(genes.df$SYMBOL == "AHSA2"), "ENTREZID"] <- 130872
-genes.df[which(genes.df$SYMBOL == "LINC00152"), "ENTREZID"] <- 112597
-genes.df[which(genes.df$DYMBOL == "GPR1"), "ENTREZID"] <- 2825
-genes.df[which(genes.df$SYMBOL == "FLJ43879"), "ENTREZID"] <- 401039
-genes.df[which(genes.df$SYMBOL == "KIAA1109"), "ENTREZID"] <- 84162
-genes.df[which(genes.df$SYMBOL == "SEPT8"), "ENTREZID"] <- 23176
-genes.df[which(genes.df$SYMBOL == "FAM26E"), "ENTREZID"] <- 254228
 genes.df[which(genes.df$SYMBOL == "FAM188B"), "ENTREZID"] <- 84182
-genes.df[which(genes.df$SYMBOL == "ABHD11-AS1"), "ENTREZID"] <- 171022
-genes.df[which(genes.df$SYMBOL == "FAM71F2"), "ENTREZID"] <- 346653
-genes.df[which(genes.df$SYMBOL == "CMB9-22P13.1"), "ENTREZID"] <- 101927789
 genes.df[which(genes.df$SYMBOL == "C11orf70"), "ENTREZID"] <- 85016
 genes.df[which(genes.df$SYMBOL == "LYRM5"), "ENTREZID"] <- 144363
 genes.df[which(genes.df$SYMBOL == "METTL7A"), "ENTREZID"] <- 25840
 genes.df[which(genes.df$SYMBOL == "LHFP"), "ENTREZID"] <- 10186
-genes.df[which(genes.df$SYMBOL == "C15orf52"), "ENTREZID"] <- 388115
 genes.df[which(genes.df$SYMBOL == "C16orf45"), "ENTREZID"] <- 89927
-genes.df[which(genes.df$SYMBOL == "FAM134C"), "ENTREZID"] <- 162427
 genes.df[which(genes.df$SYMBOL == "C17orf82"), "ENTREZID"] <- 388407
-genes.df[which(genes.df$SYMBOL == "BAIAP2-AS1"), "ENTREZID"] <- 440465
-genes.df[which(genes.df$SYMBOL == "ZADH2"), "ENTREZID"] <- 284273
-genes.df[which(genes.df$SYMBOL == "MMP24-AS1"), "ENTREZID"] <- 101410538
-genes.df[which(genes.df$SYMBOL == "ATP5E"), "ENTREZID"] <- 514
 genes.df[which(genes.df$SYMBOL == "MARCH2"), "ENTREZID"] <- 51257
+genes.df[which(genes.df$SYMBOL == "RP3-510D11.2"), "ENTREZID"] <- 102724571
+genes.df[which(genes.df$SYMBOL == "RP11-14N7.2"), "ENTREZID"] <- 100996732
+genes.df[which(genes.df$SYMBOL == "AC159540.1"), "ENTREZID"] <- 100506076
+genes.df[which(genes.df$SYMBOL == "RP4-613B23.1"), "ENTREZID"] <- 101928323
+genes.df[which(genes.df$SYMBOL == "RP11-539L10.3"), "ENTREZID"] <- 105374366
+genes.df[which(genes.df$SYMBOL == "RP11-472N13.3"), "ENTREZID"] <- 101929951
+genes.df[which(genes.df$SYMBOL == "RP11-658F2.8"), "ENTREZID"] <- 5936
+genes.df[which(genes.df$SYMBOL == "RP11-362K2.2"), "ENTREZID"] <- 100506869
+genes.df[which(genes.df$SYMBOL == "AC006262.4"), "ENTREZID"] <- 105372424
+genes.df[which(genes.df$SYMBOL == "AC006262.5"), "ENTREZID"] <- 645553
+genes.df[which(genes.df$SYMBOL == "FAM26E"), "ENTREZID"] <- 254228
 genes.df[which(genes.df$SYMBOL == "WDR63"), "ENTREZID"] <- 126820
 genes.df[which(genes.df$SYMBOL == "HIST2H2BE"), "ENTREZID"] <- 8349
-genes.df[which(genes.df$SYMBOL == "SDPR"), "ENTREZID"] <- 8436
 genes.df[which(genes.df$SYMBOL == "FAM198B"), "ENTREZID"] <- 51313
 genes.df[which(genes.df$SYMBOL == "C5orf56"), "ENTREZID"] <- 441108
 genes.df[which(genes.df$SYMBOL == "FAM65B"), "ENTREZID"] <- 9750
-genes.df[which(genes.df$SYMBOL == "HIST1H1C"), "ENTREZID"] <- 3006
 genes.df[which(genes.df$SYMBOL == "HIST1H2AC"), "ENTREZID"] <- 8334
 genes.df[which(genes.df$SYMBOL == "HIST1H2BD"), "ENTREZID"] <- 3017
 genes.df[which(genes.df$SYMBOL == "C8orf4"), "ENTREZID"] <- 56892
 genes.df[which(genes.df$SYMBOL == "FAM214B"), "ENTREZID"] <- 80256
-genes.df[which(genes.df$SYMBOL == "C10orf54"), "ENTREZID"] <- 64115
 genes.df[which(genes.df$SYMBOL == "OBFC1"), "ENTREZID"] <- 79991
 genes.df[which(genes.df$SYMBOL == "RARRES3"), "ENTREZID"] <- 5920
 genes.df[which(genes.df$SYMBOL == "LINC00346"), "ENTREZID"] <- 283487
 genes.df[which(genes.df$SYMBOL == "FAM214A"), "ENTREZID"] <- 56204
 genes.df[which(genes.df$SYMBOL == "FAM65C"), "ENTREZID"] <- 140876
+genes.df[which(genes.df$SYMBOL == "RP11-400N13.3"), "ENTREZID"] <- 105372950
+genes.df[which(genes.df$SYMBOL == "AC007246.3"), "ENTREZID"] <- 728730
+genes.df[which(genes.df$SYMBOL == "RP11-597D13.9"), "ENTREZID"] <- 285505
+genes.df[which(genes.df$SYMBOL == "RP11-783K16.5"), "ENTREZID"] <- 105369340
+genes.df[which(genes.df$SYMBOL == "RP11-66N24.3"), "ENTREZID"] <- 102724814
 
 # Remove genes that do not have corresponding Entrez IDs
 genes.df <- genes.df[which(!is.na(genes.df$ENTREZID)),]
 
 print(paste0(
   length(genes.df$SYMBOL), "/",
-  length(rownames(bj.repro)),
+  length(rownames(bj.repro.up)),
   " RIS markers had Entrez IDs."
 ))
 
@@ -535,7 +588,7 @@ dev.off()
 ## (RIS markers specific to RIS)
 # Convert gene names to Entrez IDs
 genes.df.spec <- bitr(
-  specific.genes$Gene, 
+  rownames(spec.upgenes), 
   fromType = "SYMBOL",
   toType = "ENTREZID", 
   OrgDb = org.Hs.eg.db, 
@@ -545,35 +598,30 @@ genes.df.spec <- bitr(
 genes.df.spec[which(genes.df.spec$SYMBOL == "LINC01137"), "ENTREZID"] <- 728431
 genes.df.spec[which(genes.df.spec$SYMBOL == "KIAA1324"), "ENTREZID"] <- 57535
 genes.df.spec[which(genes.df.spec$SYMBOL == "AHSA2"), "ENTREZID"] <- 130872
-genes.df.spec[which(genes.df.spec$SYMBOL == "LINC00152"), "ENTREZID"] <- 112597
-genes.df.spec[which(genes.df.spec$DYMBOL == "GPR1"), "ENTREZID"] <- 2825
-genes.df.spec[which(genes.df.spec$SYMBOL == "FLJ43879"), "ENTREZID"] <- 401039
-genes.df.spec[which(genes.df.spec$SYMBOL == "KIAA1109"), "ENTREZID"] <- 84162
-genes.df.spec[which(genes.df.spec$SYMBOL == "SEPT8"), "ENTREZID"] <- 23176
-genes.df.spec[which(genes.df.spec$SYMBOL == "FAM26E"), "ENTREZID"] <- 254228
 genes.df.spec[which(genes.df.spec$SYMBOL == "FAM188B"), "ENTREZID"] <- 84182
-genes.df.spec[which(genes.df.spec$SYMBOL == "ABHD11-AS1"), "ENTREZID"] <- 171022
-genes.df.spec[which(genes.df.spec$SYMBOL == "FAM71F2"), "ENTREZID"] <- 346653
-genes.df.spec[which(genes.df.spec$SYMBOL == "CMB9-22P13.1"), "ENTREZID"] <- 101927789
 genes.df.spec[which(genes.df.spec$SYMBOL == "C11orf70"), "ENTREZID"] <- 85016
 genes.df.spec[which(genes.df.spec$SYMBOL == "LYRM5"), "ENTREZID"] <- 144363
 genes.df.spec[which(genes.df.spec$SYMBOL == "METTL7A"), "ENTREZID"] <- 25840
 genes.df.spec[which(genes.df.spec$SYMBOL == "LHFP"), "ENTREZID"] <- 10186
-genes.df.spec[which(genes.df.spec$SYMBOL == "C15orf52"), "ENTREZID"] <- 388115
 genes.df.spec[which(genes.df.spec$SYMBOL == "C16orf45"), "ENTREZID"] <- 89927
-genes.df.spec[which(genes.df.spec$SYMBOL == "FAM134C"), "ENTREZID"] <- 162427
 genes.df.spec[which(genes.df.spec$SYMBOL == "C17orf82"), "ENTREZID"] <- 388407
-genes.df.spec[which(genes.df.spec$SYMBOL == "BAIAP2-AS1"), "ENTREZID"] <- 440465
-genes.df.spec[which(genes.df.spec$SYMBOL == "ZADH2"), "ENTREZID"] <- 284273
-genes.df.spec[which(genes.df.spec$SYMBOL == "MMP24-AS1"), "ENTREZID"] <- 101410538
-genes.df.spec[which(genes.df.spec$SYMBOL == "ATP5E"), "ENTREZID"] <- 514
 genes.df.spec[which(genes.df.spec$SYMBOL == "MARCH2"), "ENTREZID"] <- 51257
+genes.df.spec[which(genes.df.spec$SYMBOL == "RP3-510D11.2"), "ENTREZID"] <- 102724571
+genes.df.spec[which(genes.df.spec$SYMBOL == "RP11-14N7.2"), "ENTREZID"] <- 100996732
+genes.df.spec[which(genes.df.spec$SYMBOL == "AC159540.1"), "ENTREZID"] <- 100506076
+genes.df.spec[which(genes.df.spec$SYMBOL == "RP4-613B23.1"), "ENTREZID"] <- 101928323
+genes.df.spec[which(genes.df.spec$SYMBOL == "RP11-539L10.3"), "ENTREZID"] <- 105374366
+genes.df.spec[which(genes.df.spec$SYMBOL == "RP11-472N13.3"), "ENTREZID"] <- 101929951
+genes.df.spec[which(genes.df.spec$SYMBOL == "RP11-658F2.8"), "ENTREZID"] <- 5936
+genes.df.spec[which(genes.df.spec$SYMBOL == "RP11-362K2.2"), "ENTREZID"] <- 100506869
+genes.df.spec[which(genes.df.spec$SYMBOL == "AC006262.4"), "ENTREZID"] <- 105372424
+genes.df.spec[which(genes.df.spec$SYMBOL == "AC006262.5"), "ENTREZID"] <- 645553
 # Remove genes that do not have corresponding Entrez IDs
 genes.df.spec <- genes.df.spec[which(!is.na(genes.df.spec$ENTREZID)),]
 
 print(paste0(
   length(genes.df.spec$SYMBOL), "/", 
-  length(specific.genes$Gene), 
+  length(rownames(spec.upgenes)), 
   " RIS-specific genes had Entrez IDs."
 ))
 
@@ -605,14 +653,14 @@ dp.kegg <- dotplot(ris.spec.kegg, showCategory = 20) + ggtitle("KEGG Pathways")
 
 png(
   filename = "../../Images/SenotypeComparisons/RIS_GO_specific.png", 
-  width = 1050, height = 1800, res = 160
+  width = 1050, height = 1400, res = 160
 )
 dp.go
 dev.off()
 
 png(
   filename = "../../Images/SenotypeComparisons/RIS_KEGG_specific.png", 
-  width = 1050, height = 550, res = 160
+  width = 1050, height = 600, res = 160
 )
 dp.kegg
 dev.off()
@@ -621,36 +669,41 @@ dev.off()
 ## (RIS markers common to other senotypes)
 # Convert gene names to Entrez IDs
 genes.df.common <- bitr(
-  setdiff(rownames(bj.repro), specific.genes$Gene), 
+  setdiff(rownames(bj.repro.up), rownames(spec.upgenes)), 
   fromType = "SYMBOL",
   toType = "ENTREZID", 
   OrgDb = org.Hs.eg.db, 
   drop = FALSE
 )
 # Manually input Entrez IDs of genes that failed to map due to alternate names
+genes.df.common[which(genes.df.common$SYMBOL == "FAM26E"), "ENTREZID"] <- 254228
 genes.df.common[which(genes.df.common$SYMBOL == "WDR63"), "ENTREZID"] <- 126820
 genes.df.common[which(genes.df.common$SYMBOL == "HIST2H2BE"), "ENTREZID"] <- 8349
-genes.df.common[which(genes.df.common$SYMBOL == "SDPR"), "ENTREZID"] <- 8436
 genes.df.common[which(genes.df.common$SYMBOL == "FAM198B"), "ENTREZID"] <- 51313
 genes.df.common[which(genes.df.common$SYMBOL == "C5orf56"), "ENTREZID"] <- 441108
 genes.df.common[which(genes.df.common$SYMBOL == "FAM65B"), "ENTREZID"] <- 9750
-genes.df.common[which(genes.df.common$SYMBOL == "HIST1H1C"), "ENTREZID"] <- 3006
 genes.df.common[which(genes.df.common$SYMBOL == "HIST1H2AC"), "ENTREZID"] <- 8334
 genes.df.common[which(genes.df.common$SYMBOL == "HIST1H2BD"), "ENTREZID"] <- 3017
 genes.df.common[which(genes.df.common$SYMBOL == "C8orf4"), "ENTREZID"] <- 56892
 genes.df.common[which(genes.df.common$SYMBOL == "FAM214B"), "ENTREZID"] <- 80256
-genes.df.common[which(genes.df.common$SYMBOL == "C10orf54"), "ENTREZID"] <- 64115
 genes.df.common[which(genes.df.common$SYMBOL == "OBFC1"), "ENTREZID"] <- 79991
 genes.df.common[which(genes.df.common$SYMBOL == "RARRES3"), "ENTREZID"] <- 5920
 genes.df.common[which(genes.df.common$SYMBOL == "LINC00346"), "ENTREZID"] <- 283487
 genes.df.common[which(genes.df.common$SYMBOL == "FAM214A"), "ENTREZID"] <- 56204
 genes.df.common[which(genes.df.common$SYMBOL == "FAM65C"), "ENTREZID"] <- 140876
+genes.df.common[which(genes.df.common$SYMBOL == "RP11-400N13.3"), "ENTREZID"] <- 105372950
+genes.df.common[which(genes.df.common$SYMBOL == "AC007246.3"), "ENTREZID"] <- 728730
+genes.df.common[which(genes.df.common$SYMBOL == "RP11-597D13.9"), "ENTREZID"] <- 285505
+genes.df.common[which(genes.df.common$SYMBOL == "RP11-783K16.5"), "ENTREZID"] <- 105369340
+genes.df.common[which(genes.df.common$SYMBOL == "RP11-66N24.3"), "ENTREZID"] <- 102724814
+# Remove genes that do not have corresponding Entrez IDs
+genes.df.common <- genes.df.common[which(!is.na(genes.df.common$ENTREZID)),]
 # Remove genes that do not have corresponding Entrez IDs
 genes.df.common <- genes.df.common[which(!is.na(genes.df.common$ENTREZID)),]
 
 print(paste0(
   length(genes.df.common$SYMBOL), "/", 
-  length(setdiff(rownames(bj.repro), specific.genes$Gene)), 
+  length(setdiff(rownames(bj.repro.up), rownames(spec.upgenes))), 
   " genes had Entrez IDs."
 ))
 
@@ -682,7 +735,7 @@ dp.kegg <- dotplot(ris.common.kegg, showCategory = 20) + ggtitle("KEGG Pathways"
 
 png(
   filename = "../../Images/SenotypeComparisons/RIS_GO_non-specific.png", 
-  width = 1050, height = 1800, res = 160
+  width = 1050, height = 1600, res = 160
 )
 dp.go
 dev.off()
@@ -693,6 +746,5 @@ png(
 )
 dp.kegg
 dev.off()
-
 
 

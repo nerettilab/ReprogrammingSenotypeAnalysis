@@ -82,7 +82,22 @@ dds <- DESeqDataSetFromMatrix(
 )
 dds <- DESeq(dds)
 norm.counts <- counts(dds, normalized = TRUE)
-res <- results(dds)
+res <- lfcShrink(
+  dds = dds,
+  coef = "condition_Senescent_vs_Proliferating", 
+  type = "apeglm"
+)
+res <- res[complete.cases(res),]
+res <- res[order(res$log2FoldChange, decreasing = TRUE),]
+
+# Save table of all significantly 
+# differentially expressed genes in RIS, 
+# ranked by log-fold change
+write.table(
+  as.data.frame(res), 
+  file = "../Tables/SenotypeComparisons/sen_all_normalized_repro.tsv", 
+  sep = "\t", qmethod = "double"
+)
 
 
 ## Save list of genes used in DESeq for background gene set during GO/KEGG analysis
@@ -99,46 +114,44 @@ bg.genes <- bitr(
 bg.genes[which(bg.genes$SYMBOL == "LINC01137"), "ENTREZID"] <- 728431
 bg.genes[which(bg.genes$SYMBOL == "KIAA1324"), "ENTREZID"] <- 57535
 bg.genes[which(bg.genes$SYMBOL == "AHSA2"), "ENTREZID"] <- 130872
-bg.genes[which(bg.genes$SYMBOL == "LINC00152"), "ENTREZID"] <- 112597
-bg.genes[which(bg.genes$DYMBOL == "GPR1"), "ENTREZID"] <- 2825
-bg.genes[which(bg.genes$SYMBOL == "FLJ43879"), "ENTREZID"] <- 401039
-bg.genes[which(bg.genes$SYMBOL == "KIAA1109"), "ENTREZID"] <- 84162
-bg.genes[which(bg.genes$SYMBOL == "SEPT8"), "ENTREZID"] <- 23176
 bg.genes[which(bg.genes$SYMBOL == "FAM26E"), "ENTREZID"] <- 254228
 bg.genes[which(bg.genes$SYMBOL == "FAM188B"), "ENTREZID"] <- 84182
-bg.genes[which(bg.genes$SYMBOL == "ABHD11-AS1"), "ENTREZID"] <- 171022
-bg.genes[which(bg.genes$SYMBOL == "FAM71F2"), "ENTREZID"] <- 346653
-bg.genes[which(bg.genes$SYMBOL == "CMB9-22P13.1"), "ENTREZID"] <- 101927789
 bg.genes[which(bg.genes$SYMBOL == "C11orf70"), "ENTREZID"] <- 85016
 bg.genes[which(bg.genes$SYMBOL == "LYRM5"), "ENTREZID"] <- 144363
 bg.genes[which(bg.genes$SYMBOL == "METTL7A"), "ENTREZID"] <- 25840
 bg.genes[which(bg.genes$SYMBOL == "LHFP"), "ENTREZID"] <- 10186
-bg.genes[which(bg.genes$SYMBOL == "C15orf52"), "ENTREZID"] <- 388115
 bg.genes[which(bg.genes$SYMBOL == "C16orf45"), "ENTREZID"] <- 89927
-bg.genes[which(bg.genes$SYMBOL == "FAM134C"), "ENTREZID"] <- 162427
 bg.genes[which(bg.genes$SYMBOL == "C17orf82"), "ENTREZID"] <- 388407
-bg.genes[which(bg.genes$SYMBOL == "BAIAP2-AS1"), "ENTREZID"] <- 440465
-bg.genes[which(bg.genes$SYMBOL == "ZADH2"), "ENTREZID"] <- 284273
-bg.genes[which(bg.genes$SYMBOL == "MMP24-AS1"), "ENTREZID"] <- 101410538
-bg.genes[which(bg.genes$SYMBOL == "ATP5E"), "ENTREZID"] <- 514
 bg.genes[which(bg.genes$SYMBOL == "MARCH2"), "ENTREZID"] <- 51257
 bg.genes[which(bg.genes$SYMBOL == "WDR63"), "ENTREZID"] <- 126820
 bg.genes[which(bg.genes$SYMBOL == "HIST2H2BE"), "ENTREZID"] <- 8349
-bg.genes[which(bg.genes$SYMBOL == "SDPR"), "ENTREZID"] <- 8436
 bg.genes[which(bg.genes$SYMBOL == "FAM198B"), "ENTREZID"] <- 51313
 bg.genes[which(bg.genes$SYMBOL == "C5orf56"), "ENTREZID"] <- 441108
 bg.genes[which(bg.genes$SYMBOL == "FAM65B"), "ENTREZID"] <- 9750
-bg.genes[which(bg.genes$SYMBOL == "HIST1H1C"), "ENTREZID"] <- 3006
 bg.genes[which(bg.genes$SYMBOL == "HIST1H2AC"), "ENTREZID"] <- 8334
 bg.genes[which(bg.genes$SYMBOL == "HIST1H2BD"), "ENTREZID"] <- 3017
 bg.genes[which(bg.genes$SYMBOL == "C8orf4"), "ENTREZID"] <- 56892
 bg.genes[which(bg.genes$SYMBOL == "FAM214B"), "ENTREZID"] <- 80256
-bg.genes[which(bg.genes$SYMBOL == "C10orf54"), "ENTREZID"] <- 64115
 bg.genes[which(bg.genes$SYMBOL == "OBFC1"), "ENTREZID"] <- 79991
 bg.genes[which(bg.genes$SYMBOL == "RARRES3"), "ENTREZID"] <- 5920
 bg.genes[which(bg.genes$SYMBOL == "LINC00346"), "ENTREZID"] <- 283487
 bg.genes[which(bg.genes$SYMBOL == "FAM214A"), "ENTREZID"] <- 56204
 bg.genes[which(bg.genes$SYMBOL == "FAM65C"), "ENTREZID"] <- 140876
+bg.genes[which(bg.genes$SYMBOL == "RP3-510D11.2"), "ENTREZID"] <- 102724571
+bg.genes[which(bg.genes$SYMBOL == "RP11-14N7.2"), "ENTREZID"] <- 100996732
+bg.genes[which(bg.genes$SYMBOL == "RP11-400N13.3"), "ENTREZID"] <- 105372950
+bg.genes[which(bg.genes$SYMBOL == "AC007246.3"), "ENTREZID"] <- 728730
+bg.genes[which(bg.genes$SYMBOL == "AC159540.1"), "ENTREZID"] <- 100506076
+bg.genes[which(bg.genes$SYMBOL == "RP4-613B23.1"), "ENTREZID"] <- 101928323
+bg.genes[which(bg.genes$SYMBOL == "RP11-539L10.3"), "ENTREZID"] <- 105374366
+bg.genes[which(bg.genes$SYMBOL == "RP11-597D13.9"), "ENTREZID"] <- 285505
+bg.genes[which(bg.genes$SYMBOL == "RP11-472N13.3"), "ENTREZID"] <- 101929951
+bg.genes[which(bg.genes$SYMBOL == "RP11-783K16.5"), "ENTREZID"] <- 105369340
+bg.genes[which(bg.genes$SYMBOL == "RP11-658F2.8"), "ENTREZID"] <- 5936
+bg.genes[which(bg.genes$SYMBOL == "RP11-362K2.2"), "ENTREZID"] <- 100506869
+bg.genes[which(bg.genes$SYMBOL == "RP11-66N24.3"), "ENTREZID"] <- 102724814
+bg.genes[which(bg.genes$SYMBOL == "AC006262.4"), "ENTREZID"] <- 105372424
+bg.genes[which(bg.genes$SYMBOL == "AC006262.5"), "ENTREZID"] <- 645553
 
 # Remove genes that did not have Entrez IDs
 bg.genes <- bg.genes[which(!is.na(bg.genes$ENTREZID)),]
@@ -172,3 +185,5 @@ write.table(
   down.counts, file = "../Tables/SenotypeComparisons/sen_downgenes_normalized_repro.tsv", 
   sep = "\t", qmethod = "double"
 )
+
+
