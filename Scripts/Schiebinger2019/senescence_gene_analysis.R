@@ -5,6 +5,7 @@ setwd("Data/Schiebinger2019/")
 library(Seurat)
 library(ggplot2)
 library(ggrastr)
+library(MatrisomeAnalyzeR)
 
 scbg <- readRDS("scbg_final.rds")
 
@@ -70,9 +71,19 @@ markers <- FindAllMarkers(
 markers <- subset(markers, p_val_adj < 0.05)
 markers <- markers[order(markers$avg_log2FC, decreasing = TRUE),]
 
-markers.CDKN1A <- subset(markers, cluster == "CDKN1A")
-markers.CDKN2A <- subset(markers, cluster == "CDKN2A")
-markers.Both <- subset(markers, cluster == "Both")
+for (category in unique(scbg$Expression)) {
+  marksub <- subset(markers, cluster == category)
+  assign(paste0("markers.", category), marksub)
+  
+  # Check ECM enrichment: subset markers that are a part of the Matrisome gene set
+  matr <- matriannotate(
+    data = marksub, gene.column = "gene", 
+    species = "mouse"
+  )
+  matr <- matr[matr$`Annotated Matrisome Division` != "Non-matrisome",]
+  assign(paste0("matr.", category), matr)
+}
+
 gc()
 
 print(paste(
@@ -87,9 +98,32 @@ print(paste(
   length(unique(markers.Both$gene)), 
   "genes were identified as markers for double-high cells."
 ))
+print(paste(
+  "There were a total of", 
+  length(unique(c(markers.CDKN1A$gene, markers.CDKN2A$gene, markers.Both$gene))), 
+  "unique identified markers."
+))
+
+print(paste(
+  "# of 'Double-high' markers that are part of Matrisome:", 
+  length(unique(matr.Both$`Annotated Gene`))
+))
+print(paste(
+  "# of 'CDKN1A-high' markers that are part of Matrisome:", 
+  length(unique(matr.CDKN1A$`Annotated Gene`))
+))
+print(paste(
+  "# of 'CDKN2A-high' markers that are part of Matrisome:", 
+  length(unique(matr.CDKN2A$`Annotated Gene`))
+))
+print(paste(
+  "# of 'Neither' markers that are part of Matrisome:", 
+  length(unique(matr.Neither$`Annotated Gene`))
+))
+
 
 # Search for SenMayo genes within markers
-senmayo <- read.csv("../../Tables/GeneSets/senmayo_genes_mouse.csv")
+senmayo <- read.csv("../../Tables/MouseReprogramming/GeneSets/senmayo_genes_mouse.csv")
 sm.Both <- markers.Both[which(markers.Both$gene %in% senmayo$Gene.murine.),]
 sm.CDKN1A <- markers.CDKN1A[which(markers.CDKN1A$gene %in% senmayo$Gene.murine.),]
 sm.CDKN2A <- markers.CDKN2A[which(markers.CDKN2A$gene %in% senmayo$Gene.murine.),]

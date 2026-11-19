@@ -435,6 +435,47 @@ fp.dusp9 <- FeaturePlot(
   legend.key.size = unit(1.25, "cm")
 )
 
+# OSKM
+fp.oct4 <- FeaturePlot(
+  object = scbg, features = "Pou5f1", 
+  order = TRUE, raster = TRUE
+) + labs(
+  x = "UMAP 1", y = "UMAP 2", 
+  title = "Oct4"
+) + theme(
+  text = element_text(size = 30), 
+  axis.text = element_blank(), 
+  axis.ticks = element_blank(), 
+  legend.key.size = unit(1.25, "cm")
+)
+fp.sox2 <- FeaturePlot(
+  object = scbg, features = "Sox2", 
+  order = TRUE, raster = TRUE
+) + labs(x = "UMAP 1", y = "UMAP 2") + theme(
+  text = element_text(size = 30), 
+  axis.text = element_blank(), 
+  axis.ticks = element_blank(), 
+  legend.key.size = unit(1.25, "cm")
+)
+fp.klf4 <- FeaturePlot(
+  object = scbg, features = "Klf4", 
+  order = TRUE, raster = TRUE
+) + labs(x = "UMAP 1", y = "UMAP 2") + theme(
+  text = element_text(size = 30), 
+  axis.text = element_blank(), 
+  axis.ticks = element_blank(), 
+  legend.key.size = unit(1.25, "cm")
+)
+fp.myc <- FeaturePlot(
+  object = scbg, features = "Myc", 
+  order = TRUE, raster = TRUE
+) + labs(x = "UMAP 1", y = "UMAP 2") + theme(
+  text = element_text(size = 30), 
+  axis.text = element_blank(), 
+  axis.ticks = element_blank(), 
+  legend.key.size = unit(1.25, "cm")
+)
+
 # Stromal
 fp.col3a1 <- FeaturePlot(
   object = scbg, features = "Col3a1", 
@@ -531,7 +572,7 @@ fp.cited2 <- FeaturePlot(
   legend.key.size = unit(1.25, "cm")
 )
 
-# Cell cycle arrest genes
+# Cell cycle arrest genes and lamin B1
 fp.cdkn1a <- FeaturePlot(
   object = scbg, features = "Cdkn1a", 
   order = TRUE, raster = TRUE
@@ -552,6 +593,15 @@ fp.cdkn2a <- FeaturePlot(
 )
 fp.trp53 <- FeaturePlot(
   object = scbg, features = "Trp53", 
+  order = TRUE, raster = TRUE
+) + labs(x = "UMAP 1", y = "UMAP 2") + theme(
+  text = element_text(size = 30), 
+  axis.text = element_blank(), 
+  axis.ticks = element_blank(), 
+  legend.key.size = unit(1.25, "cm")
+)
+fp.lmnb1 <- FeaturePlot(
+  object = scbg, features = "Lmnb1", 
   order = TRUE, raster = TRUE
 ) + labs(x = "UMAP 1", y = "UMAP 2") + theme(
   text = element_text(size = 30), 
@@ -584,6 +634,31 @@ png(
   width = 1250, height = 1000, res = 140
 )
 fp.dusp9
+dev.off()
+
+png(
+  filename = "../../Images/MouseReprogramming/scbg_FeaturePlot_OCT4.png", 
+  width = 1300, height = 1000, res = 140
+)
+fp.oct4
+dev.off()
+png(
+  filename = "../../Images/MouseReprogramming/scbg_FeaturePlot_SOX2.png", 
+  width = 1250, height = 1000, res = 140
+)
+fp.sox2
+dev.off()
+png(
+  filename = "../../Images/MouseReprogramming/scbg_FeaturePlot_KLF4.png", 
+  width = 1250, height = 1000, res = 140
+)
+fp.klf4
+dev.off()
+png(
+  filename = "../../Images/MouseReprogramming/scbg_FeaturePlot_MYC.png", 
+  width = 1250, height = 1000, res = 140
+)
+fp.myc
 dev.off()
 
 png(
@@ -666,6 +741,12 @@ png(
   width = 1250, height = 1000, res = 140
 )
 fp.trp53
+dev.off()
+png(
+  filename = "../../Images/MouseReprogramming/scbg_FeaturePlot_LMNB1.png", 
+  width = 1250, height = 1000, res = 140
+)
+fp.lmnb1
 dev.off()
 
 

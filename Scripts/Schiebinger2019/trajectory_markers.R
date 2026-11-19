@@ -80,7 +80,12 @@ timepoints.plu_vs_stro <- c(
   "D08", "D09", "D10", "D11", "D12", "D13", 
   "D14", "D15", "D16", "D17", "D18"
 )
-genes.of.interest <- c("Nanog", "Dppa5a", "Tdgf1", "Dusp9", "Col3a1", "Mmp2", "Fmod", "Cd47", "Cdkn1a", "Cdkn2a", "Trp53")
+genes.of.interest <- c(
+  "Nanog", "Dppa5a", "Tdgf1", "Dusp9", 
+  "Pou5f1", "Sox2", "Klf4", "Myc", 
+  "Col3a1", "Mmp2", "Fmod", "Cd47", 
+  "Cdkn1a", "Cdkn2a", "Trp53", "Lmnb1"
+)
 
 sig.df <- data.frame(matrix(
   ncol = length(genes.of.interest), 
@@ -155,6 +160,7 @@ for (gene in colnames(sig.df)) {
   y.max <- max(FetchData(scbg.plu_vs_stro, vars = gene)) # Determine bounds of y-axis
   
   # Create initial violin plot
+  plot.title = ifelse(gene == "Pou5f1", "Oct4", gene)
   vp <- VlnPlot(
     object = scbg.plu_vs_stro, features = gene, 
     cols = c("#C77CFF", "#B79F00"), 
@@ -165,7 +171,7 @@ for (gene in colnames(sig.df)) {
     text = element_text(size = 30), 
     axis.text = element_text(size = 21), 
     legend.key.size = unit(1.15, "cm")
-  ) + labs(x = "Timepoint")
+  ) + labs(x = "Timepoint", title = plot.title)
   
   
   # Variables to handle spacing of statistical significance markers
@@ -242,7 +248,7 @@ for (gene in colnames(sig.df)) {
   
   
   # Assign variable to completed violin plot
-  assign(paste0("vp.", gene), vp)
+  assign(paste0("vp.", plot.title), vp)
   
   gc()
 }
@@ -272,6 +278,32 @@ png(
 )
 vp.Dusp9
 dev.off()
+
+png(
+  filename = "../../Images/MouseReprogramming/scbg_ViolinPlot_OCT4.png", 
+  width = 1900, height = 1220, res = 140
+)
+vp.Oct4
+dev.off()
+png(
+  filename = "../../Images/MouseReprogramming/scbg_ViolinPlot_SOX2.png", 
+  width = 1900, height = 1220, res = 140
+)
+vp.Sox2
+dev.off()
+png(
+  filename = "../../Images/MouseReprogramming/scbg_ViolinPlot_KLF4.png", 
+  width = 1900, height = 1220, res = 140
+)
+vp.Klf4
+dev.off()
+png(
+  filename = "../../Images/MouseReprogramming/scbg_ViolinPlot_Myc.png", 
+  width = 1900, height = 1220, res = 140
+)
+vp.Myc
+dev.off()
+
 png(
   filename = "../../Images/MouseReprogramming/scbg_ViolinPlot_COL3A1.png", 
   width = 1900, height = 1220, res = 140
@@ -296,6 +328,7 @@ png(
 )
 vp.Cd47
 dev.off()
+
 png(
   filename = "../../Images/MouseReprogramming/scbg_ViolinPlot_CDKN1A.png", 
   width = 1900, height = 1220, res = 140
@@ -313,6 +346,12 @@ png(
   width = 1900, height = 1220, res = 140
 )
 vp.Trp53
+dev.off()
+png(
+  filename = "../../Images/MouseReprogramming/scbg_ViolinPlot_LMNB1.png", 
+  width = 1900, height = 1220, res = 140
+)
+vp.Lmnb1
 dev.off()
 
 # Garbage collection
