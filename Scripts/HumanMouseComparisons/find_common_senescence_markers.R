@@ -8,8 +8,8 @@ library(tidyverse)
 library(ggplot2)
 library(ggupset)
 
-human.mart = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-mouse.mart = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+human.mart = useEnsembl("genes", dataset = "hsapiens_gene_ensembl")
+mouse.mart = useEnsembl("genes", dataset = "mmusculus_gene_ensembl")
 
 
 
